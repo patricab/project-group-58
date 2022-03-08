@@ -1,6 +1,6 @@
-[submodule "driver-go"]
-	path = driver-go
+[submodule "Network-go"]
+	path = Network-go
+	url = https://github.com/TTK4145/Network-go
+[submodule "Driver-go"]
+	path = Driver-go
 	url = https://github.com/TTK4145/driver-go
-[submodule "network-go"]
-	path = network-go
-	url = https://github.com/TTK4145/Network-go.git
