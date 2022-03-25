@@ -1,6 +1,20 @@
 package main
 
-/* Utility for saving and loading backups of orders */
+/* Utility for saving and loading backups of orders to .txt files */
+
+/*
+EXAMPLE FILE STRUCTURE
+
+CAB ORDERS
+Floor	1		2		3		4
+		bool	bool	bool	bool
+
+HALL ORDERS
+		1		2		3		4
+up		bool	bool	bool
+down			bool	bool	bool
+
+*/
 
 import(
 	"os"
@@ -8,26 +22,30 @@ import(
 )
 
 func SaveOrder(order orderType, filename string) {
-	// Saving given orders to a file
-	// Hall and cab?
+	// Save orders to file
 
 	f, err := os.Open(filename)
-	if err != nil {
-		log.Fatal(err)
-	}
+	check(err)
 
-	defer f.Close()
+	defer f.Close() // Idiomatic way
 
-	// Save orders
+	// 1. Initialization or check if files are okay.
+
+	// 2. Saving Orders: Modifying the file(s)
 
 }
 
 func LoadOrders() order orderType {
 	// Reads from the saved orders and returns content
-	// ReadOrders
-	// ///
 
-	// Return file content or do decisions here?
+	f, err := os.Open(filename)
+	check(err)
+
+	defer f.Close() // Idiomatic way
+
+	// 1. Read from file
+
+	// 2. Return chosen structure
 }
 
 func ReadOrders(filename string) data string {
@@ -36,4 +54,10 @@ func ReadOrders(filename string) data string {
 		log.Fatal(err)
 	}
 	return data // Might not be string
+}
+
+func check(e error) {
+	if e != nil {
+		Log.Fatal(e)
+	}
 }
