@@ -15,18 +15,39 @@ func Distributor() {
 	}
 }
 
-func received_cmdDelegate(floor chan int) {
-	// Jacob
-	// receives delegate order -> sends floor x to
+/*	Author: jacobkris
+ *	Receives delegate order from Network --> sends floor x to state machine
+ */
+
+func received_cmdDelegate(floor int, cmdDelegate chan int) (DeleCh chan int) {
+
+	checkDelegate := <-cmdDelegate // sets checkDelegate from channel cmdDelegate
+	// set-up channel for communicating trough to the FSM
+	if checkDelegate == 1 {
+		DeleCh := make(chan int)
+		DeleCh <- floor
+
+	}
+	return DeleCh // returns channel for sending floor x value
 }
 
-func received_cmdReqCost() {
-	// Jacob
+/*	Author: jacobkris
+ *	receives cmdReqCost --> starts calculating the cost --> sends the cost back to network
+ */
+func received_cmdReqCost() (owncost int) {
 
+	checkRq := <-rqch // gets value from command cmdReqCost channel
+	if checkRq == 1 { // checks if value is one
+		owncost := calculate_own_cost() // calculates own cost
+	}
+	return
 }
 
+/*	Author: jacobkris
+ *	receives cmdReqCost --> starts calculating the cost --> sends the cost back to network
+ */
 func request_cost() {
-	// Patric
+	// sends out request for cost from other nodes and receives cost from other nodes
 }
 
 func watchdog() {
