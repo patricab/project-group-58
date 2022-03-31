@@ -12,7 +12,7 @@ func main() {
 
 	backup.SaveCab(test_order) // Save
 
-	backup_order := backup.LoadOrder("orders.txt") // Load
+	backup_order := backup.LoadCab("orders.txt") // Load
 
 	fmt.Printf("Type: %T, Loaded order: %v \n", backup_order, backup_order)
 
