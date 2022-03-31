@@ -63,7 +63,7 @@ func Handler(Id string, Tx chan Msg, Rx chan Msg) {
 	for {
 		select {
 		case m := <-_rx:
-			if m.Dest == _id {
+			if (m.Dest == _id) || (m.Dest == 0) {
 				Rx <- m
 			}
 		}

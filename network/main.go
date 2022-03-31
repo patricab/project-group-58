@@ -27,7 +27,7 @@ func main() {
 		fmt.Printf("id: %d\n", _id)
 		fmt.Printf("dest: %d\n", _dest)
 
-		msg := network.Msg{_id, _dest, network.CmdDelegate, 1}
+		msg := network.Msg{_id, _dest, network.CmdReqCost, 1}
 		for {
 			fmt.Println("Sending message")
 			tx <- msg
