@@ -2,6 +2,7 @@ package main
 
 import (
 	"Network-go/network/bcast"
+	"strconv"
 	"time"
 
 	// "Network-go/network/localip"
@@ -12,19 +13,19 @@ import (
 )
 
 /* Custom sturcts/types */
-type cmd string
+type cmd int
 
 const (
-	cmdReqCost  cmd = "0"
-	cmdCost         = "1"
-	cmdDelegate     = "2"
+	cmdReqCost  cmd = 0
+	cmdCost         = 1
+	cmdDelegate     = 2
 )
 
 type Msg struct {
-	id      string
-	dest    string
-	command cmd
-	data    string // both cost and floor
+	Id      int
+	Dest    int
+	Command cmd
+	Data    int // both cost and floor
 }
 
 func main() {
@@ -48,28 +49,29 @@ func main() {
 	// alive on the network
 	peerUpdateCh := make(chan peers.PeerUpdate)
 
-	// Id, _ := strconv.Atoi(id)
-	// Dest, _ := strconv.Atoi(dest)
+	_id, _ := strconv.Atoi(id)
+	_dest, _ := strconv.Atoi(dest)
 
 	// Disable/enable the transmitter after it has been started.
-	TxEnable := make(chan bool)
-	go peers.Transmitter(15648, id, TxEnable)
+	peerTxEnable := make(chan bool)
+	go peers.Transmitter(15648, id, peerTxEnable)
 	go peers.Receiver(15648, peerUpdateCh)
 	// TxEnable <- true
 
 	// We make channels for sending and receiving our custom data types
-	tx := make(chan Msg, 2)
-	rx := make(chan Msg, 2)
+	tx := make(chan Msg)
+	rx := make(chan Msg)
 
 	go bcast.Transmitter(16570, tx)
 	go bcast.Receiver(16570, rx)
 
 	// The example message. We just send one of these every second.
 	go func() {
-		fmt.Printf("id: %s\n", id)
-		fmt.Printf("dest: %s\n", dest)
+		fmt.Printf("id: %d\n", _id)
+		fmt.Printf("dest: %d\n", _dest)
 
-		msg := Msg{id, dest, cmdDelegate, "1"}
+		// msg := Msg{id, dest, cmdDelegate, "1"}
+		var msg = Msg{_id, _dest, cmdDelegate, 1}
 		for {
 			tx <- msg
 			time.Sleep(1 * time.Second)
@@ -85,11 +87,11 @@ func main() {
 			fmt.Printf("  New:      %q\n", p.New)
 			fmt.Printf("  Lost:     %q\n", p.Lost)
 
-		case rx_msg := <-rx:
+		case m := <-rx:
 			fmt.Println("Recieved message, checking address")
-			// if rx_msg.dest == id {
-			fmt.Printf("Received: %#v\n", rx_msg)
-			// }
+			if m.Dest == _id {
+				fmt.Printf("Received: %#v\n", m)
+			}
 		}
 	}
 }
