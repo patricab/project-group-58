@@ -36,12 +36,12 @@ func received_cmdDelegate(floor int, cmdDelegate chan int) (DeleCh chan int) {
 	if checkDelegate == 1 {
 		DeleCh := make(chan int)
 		DeleCh <- floor
-
 	}
 	return DeleCh // returns channel for sending floor x value
 }
 
-/*	Author: jacobkris
+/*	Name: received_cmdReqCost()(own cost (type integer))
+ *	Author: jacobkris
  *	receives cmdReqCost --> starts calculating the cost --> sends the cost back to network
  */
 func received_cmdReqCost() (owncost int) {
@@ -53,10 +53,15 @@ func received_cmdReqCost() (owncost int) {
 	return
 }
 
-/*	Author: jacobkris
+/*	Name: request_cost(floor value (type integer)))
+ *	Author: jacobkris
  *	receives cmdReqCost --> starts calculating the cost --> sends the cost back to network
  */
-func request_cost() {
+func request_cost(floor int) {
+	//network.Handler(id, tx, rx)
+
+	var msg = network.Msg{id, 0, network.cmdReqCost, floor}
+	tx <- msg
 	// sends out request for cost from other nodes and receives cost from other nodes
 }
 
