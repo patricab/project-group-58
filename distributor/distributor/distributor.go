@@ -64,33 +64,22 @@ func watchdog() {
 	// Patric
 }
 
-func calculate_own_cost(floor, MotorDirection int) int {
+func calculate_own_cost(floor, MotorDirection int) {
+	calculated_cost := 99 // PLACEHOLDER: high initial cost to not accidentally pass a zero as zero-value
+	msg := network.Msg{id, 1, network.CmdCost, calculated_cost}
 	// Borge
-	// Purpose: Calculates own cost for either ...
-	//				1) ... a hall call the local elevator received and want to compare to others
-	//				2) ... another elevator requests this elevator's hall cost
 
-	// Cost algorithm: [cost] = calculate_own_cost(floor, MotorDirection)
+	// Calculate the cost for a hall call.
 
-	// Distance from desired floor: 				+2*distance [int]
-	//		This includes an elevator going
-	// Motor direction facing way of desired floor: -1*distance [int]
-	// Motor direction facing other way: 			+1*distance [int]
+	// Parameters
+	// cabOrders:  [bool, bool, bool, bool]
+	// hallOrders: [[bool, bool, bool], [bool, bool, bool]]
+	cabOrders, hallOrders := LoadBackup(backupPath) // Non-existant function for now
+	desired_floor := msg.Dest
 
-	// Problem scenario:
-	//		One elevator with distance cost 2 but wrong motor direction has the same cost as a
-	//		elevator a whole floor further away but with correct motor direction. If the first elevator is idle,
-	//		it obviously is faster than the other.
+	//
 
-	// Anything else to include?
-	// 		- Amount of stops on the way.
-	//		- Distance based on distance to active order + distance from that order floor to desired floor.
-
-	desired_floor := 1 // PLACEHOLDER
-
-	// MAGIC
-
-	return cost
+	msg.cost = calculated_cost
 
 }
 
