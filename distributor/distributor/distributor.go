@@ -1,6 +1,13 @@
 package distributor
 
-import "strconv"
+import (
+	"network/network"
+	"strconv"
+)
+
+var id = 0
+var tx = make(chan network.Msg)
+var rx = make(chan network.Msg)
 
 // const (
 // 	BT_HallUp   ButtonType = 0
@@ -8,6 +15,7 @@ import "strconv"
 // 	BT_Cab                 = 2
 
 func Distributor() {
+	go network.Handler(id, tx, rx)
 	for {
 		select {
 		case a <- drv_buttons: // Listening to PollButtons (2 is cab -> local order)
