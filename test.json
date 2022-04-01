@@ -1,0 +1,7 @@
+{
+    "cabOrder": ["false", "false", "false", "false"],
+    "hallOrder": {
+        "hallUp": ["false", "false", "false", "false"],
+        "hallDown": ["false", "false", "false", "false"]
+    }
+}

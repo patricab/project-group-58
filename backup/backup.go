@@ -56,15 +56,17 @@ func SaveOrderJSON(order Order) {
 	fmt.Println("Under production!")
 }
 
-func LoadOrderJSON() Order {
+func LoadOrderJSON(filename string) {
 
-	data, err := ioutil.ReadFile("test.json")
+	data, err := ioutil.ReadFile(filename)
 	check(err)
 
 	var orders Order
-	json.Unmarshal([]byte(data), &orders)
+	json.Unmarshal(data, &orders)
 
-	return orders
+	//return orders
+	//fmt.Println(orders.CabOrder)
+	fmt.Println(orders)
 }
 
 func LoadCab(filename string) []bool {

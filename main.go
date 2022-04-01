@@ -1,16 +1,30 @@
 package main
 
 import (
+	"backup/backup"
 	"fmt"
-
-	"./backup"
 )
+
+type HallOrder struct {
+	HallUP   []bool
+	HallDOWN []bool
+}
+
+type Order struct {
+	CabOrder  []bool
+	HallOrder HallOrder
+}
 
 func main() {
 	// Order
 	//orders := LoadOrderJSON()
 	//fmt.Println(orders)
-	fmt.Println("hey")
+	boolOrder := []bool{true, true, true}
+	backup.SaveCab(boolOrder)
 	data := backup.LoadCab("orders.txt")
 	fmt.Println(data)
+
+	// JSON
+	//json_data := backup.LoadOrderJSON("test.json")
+	backup.LoadOrderJSON("test.json")
 }
