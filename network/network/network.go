@@ -47,9 +47,10 @@ func Handler(Id string, Tx chan Msg, Rx chan Msg) {
 	// Disable/enable the transmitter after it has been started.
 	peerTxEnable := make(chan bool)
 
-	_id, _ := strconv.Atoi(Id)
+	_id, _ := strconv.Atoi(Id) // Int value of ID string
 	// _dest, _ := strconv.Atoi(dest)
 
+	/* Peers Tx/Rx pair */
 	go peers.Transmitter(15648, Id, peerTxEnable)
 	go peers.Receiver(15648, peerUpdateCh)
 
@@ -63,8 +64,9 @@ func Handler(Id string, Tx chan Msg, Rx chan Msg) {
 	for {
 		select {
 		case m := <-_rx:
+			/* Check if recieved dest matches our ID, or special case ID (*0) */
 			if (m.Dest == _id) || (m.Dest == 0) {
-				Rx <- m
+				Rx <- m // Pass message on to user
 			}
 		}
 	}
