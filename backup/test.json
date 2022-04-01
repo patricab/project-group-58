@@ -1,0 +1,7 @@
+{
+    "cabOrder": "bool, bool, bool, bool",
+    "hallOrder": {
+        "hallUp": "bool, bool, bool, bool",
+        "hallDown": "bool, bool, bool, bool"
+    }
+}

@@ -17,15 +17,22 @@ down			bool	bool	bool
 */
 
 import (
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"strconv"
 	"strings"
 )
 
-type Orders struct {
-	Name string
-	Data []bool
+type HallOrder struct {
+	HallUP   []bool
+	HallDOWN []bool
+}
+
+type Order struct {
+	CabOrder  []bool
+	HallOrder HallOrder
 }
 
 const fname = "orders.txt"
@@ -43,6 +50,21 @@ func SaveCab(order []bool) {
 
 	err := ioutil.WriteFile(fname, []byte(order_string), 0644)
 	check(err)
+}
+
+func SaveOrderJSON(order Order) {
+	fmt.Println("Under production!")
+}
+
+func LoadOrderJSON() Order {
+
+	data, err := ioutil.ReadFile("test.json")
+	check(err)
+
+	var orders Order
+	json.Unmarshal([]byte(data), &orders)
+
+	return orders
 }
 
 func LoadCab(filename string) []bool {
