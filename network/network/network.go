@@ -12,9 +12,10 @@ import (
 type Cmd int
 
 const (
-	CmdReqCost  Cmd = 0
-	CmdCost         = 1
-	CmdDelegate     = 2
+	CmdReqCost  Cmd = 0 // Request cost
+	CmdCost         = 1 // ACK CmdReqCost
+	CmdDelegate     = 2 // Delegate order
+	CmdACK          = 3 // Heartbeat
 )
 
 type Msg struct {

@@ -70,8 +70,11 @@ const (
 	CmdReqCost  Cmd = 0
 	CmdCost         = 1
 	CmdDelegate     = 2
+    CmdACK          = 3
 )
 ```
 - CmdReqCost - Request cost from all nodes on the network. (**NB**: Remeber to set the _Dest_ ID to 0 in order to address all nodes on the network). The _Data_ field should contain the floor value that the nodes should base their cost calculations on. 
 - CmdCost - Reply to CmdReqCost command. The _Dest_ should be the ID of the node that requested the cost value. The _Data_ field should hold the calculated cost value.
 - CmdDelegate - Delegation order to specific node in network to service a given floor. The _Data_ field should hold the floor level that the node should service.
+- CmdACK - Heartbeat command. Sending this command with a _Data_ field of _0_ prompts the destination node
+to reply within a given timeframe, with the same command, and with a _Data_ field of _1_.
