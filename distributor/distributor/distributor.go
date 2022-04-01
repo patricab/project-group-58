@@ -3,9 +3,15 @@ package distributor
 import (
 	"network/network"
 	"strconv"
+	"time"
 )
 
+/* Global variables */
+// Constants
 var id = 0
+var timeout = 3
+
+// Channels
 var tx = make(chan network.Msg)
 var rx = make(chan network.Msg)
 
@@ -60,8 +66,54 @@ func request_cost() {
 	// sends out request for cost from other nodes and receives cost from other nodes
 }
 
-func watchdog() {
-	// Patric
+func recieved_cmdACK() {
+	select {
+	case m := <-rx:
+		/* Check that we have recieved heartbeat command */
+		if (m.Command == network.CmdACK) && (m.Data == 0) {
+			/* Send ACK */
+			msg := network.Msg{id, m.Id, network.CmdACK, 1}
+			tx <- msg
+		}
+	}
+}
+
+/**
+ * Watchdog: Check if node is still alive
+ * dest - (int) ID of target node
+ * alive - (channel) Status of target node
+ * exit - (channel) Turn off watchdog
+ */
+func watchdog(dest int, alive chan bool, exit chan bool) {
+	// var rx_msg = network.Msg{dest, id, network.CmdACK, 0}
+	var timer time.Timer
+
+	for {
+		select {
+		/* Stop watchdog */
+		case <-exit:
+			return
+
+		case m := <-rx:
+			/* Recieved response */
+			if (m.Command == network.CmdACK) && (m.Data == 1) {
+				timer.Stop()  // Stop timer
+				alive <- true // Signal user that target is alive
+			}
+
+		/* Timer ended, no response */
+		case <-timer.C:
+			alive <- false
+
+		default:
+			/* Send heartbeat command */
+			msg := network.Msg{id, dest, network.CmdACK, 0}
+			tx <- msg
+
+			/* Start timer */
+			timer = *time.NewTimer(time.Duration(timeout) * time.Second)
+		}
+	}
 }
 
 func calculate_own_cost(floor, MotorDirection int) int {
