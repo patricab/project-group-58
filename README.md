@@ -5,7 +5,7 @@ The backup module contains functions for saving active orders to file. Cab and h
 
 The orders are saved as boolean values where ``false`` means no order and ``true`` is an active order at the floor the value represents in the array. Cab orders consists of one array for a local elevator while the hall orders are separated in Up and Down arrays for respective buttons.
 
-
+BUG: In LoadOrderJSON the struct overwrites all of the slices in map["cab"] etc.
 
 
 ---------------------------------------------------------------------

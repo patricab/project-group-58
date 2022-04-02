@@ -37,9 +37,10 @@ type Order struct {
 
 // CONSTANTS TO ACCOUNT FOR
 const fname = "orders.txt"
-const jsonfile = "orders"
-const n_elevators = 3
-const m_floors = 4
+const BACKUP_FILENAME = "orders"
+const N_ELEVATORS = 3
+const M_FLOORS = 4
+const N_FILES = 3
 
 func SaveCab(order []bool) {
 	// Saves cab order as a string in a text file.
@@ -58,7 +59,6 @@ func SaveCab(order []bool) {
 
 func SaveOrderJSON(cab []bool, hall [][]bool) {
 
-	n_files := 3
 	var orders Order
 
 	orders.CabOrder = cab
@@ -69,8 +69,8 @@ func SaveOrderJSON(cab []bool, hall [][]bool) {
 	check(errMarshal)
 	fmt.Printf("%T is the type for the data\n", filedata)
 
-	for i := 0; i < n_files; i++ {
-		filename := jsonfile + strconv.Itoa(i) + ".json"
+	for i := 0; i < N_FILES; i++ {
+		filename := BACKUP_FILENAME + strconv.Itoa(i) + ".json"
 		errWrite := ioutil.WriteFile(filename, filedata, 0644)
 		check(errWrite)
 	}
@@ -78,18 +78,57 @@ func SaveOrderJSON(cab []bool, hall [][]bool) {
 }
 
 func LoadOrderJSON() ([]bool, [][]bool) {
-	// Returns Cab and Hall Orders
 
-	data, errRead := ioutil.ReadFile(jsonfile)
-	check(errRead)
+	m := map[string][][]bool{
+		"cab":      {{}},
+		"hallUp":   {{}},
+		"hallDown": {{}},
+	}
+
+	m["cab"] = make([][]bool, N_FILES)
+	m["hallUp"] = make([][]bool, N_FILES)
+	m["hallDown"] = make([][]bool, N_FILES)
 
 	var orders Order
-	errUnmarshal := json.Unmarshal(data, &orders)
-	check(errUnmarshal)
 
-	cab := orders.CabOrder
-	hallup := orders.HallOrder.Up
-	halldown := orders.HallOrder.Down
+	for i := 0; i < N_FILES; i++ {
+		filename := BACKUP_FILENAME + strconv.Itoa(i) + ".json"
+		fmt.Println(filename)
+		filedata, err := ioutil.ReadFile(filename)
+		check(err)
+
+		//var orders Order
+		errUnmarshal := json.Unmarshal(filedata, &orders)
+		check(errUnmarshal)
+
+		c := orders.CabOrder
+		fmt.Println(c)
+
+		// Append data to list for comparison
+		// LAST CALL TO STRUCT OVERWRITES DATA IN ALL SLICES
+		m["cab"][i] = c
+		m["hallUp"][i] = orders.HallOrder.Up
+		m["hallDown"][i] = orders.HallOrder.Down
+		fmt.Println(m["cab"])
+	}
+
+	// Compare data
+	areEqual := true
+	for i := 0; i < N_FILES; i++ {
+		areEqual = areElementsEqual(m["cab"][0], m["cab"][i])
+		areEqual = areElementsEqual(m["hallUp"][0], m["hallUp"][i])
+		areEqual = areElementsEqual(m["hallDown"][0], m["hallDown"][i])
+	}
+
+	if areEqual != true {
+		// Find most common element
+		// ADD THEM INTO FIRST SLICE
+		fmt.Println("ORDERS ARE NOT EQUAL!")
+	}
+
+	cab := m["cab"][0]
+	hallup := m["hallUp"][0]
+	halldown := m["hallDown"][0]
 	hall := [][]bool{hallup, halldown}
 	return cab, hall
 }
@@ -116,4 +155,18 @@ func check(e error) {
 	if e != nil {
 		log.Fatal(e)
 	}
+}
+
+func areElementsEqual(x, y []bool) bool {
+	if len(x) != len(y) {
+		return false
+	}
+
+	for i := range x {
+		if x[i] != y[i] {
+			return false
+		}
+	}
+	return true
+
 }

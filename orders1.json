@@ -1,20 +1,20 @@
 {
- "CabOrder": [
-  false,
-  false,
-  false,
-  true
- ],
- "HallOrder": {
-  "Up": [
-   false,
-   false,
-   false
-  ],
-  "Down": [
-   false,
-   true,
-   false
-  ]
- }
-}
+    "CabOrder": [
+     true,
+     false,
+     false,
+     true
+    ],
+    "HallOrder": {
+     "Up": [
+      false,
+      false,
+      false
+     ],
+     "Down": [
+      false,
+      true,
+      false
+     ]
+    }
+   }

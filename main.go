@@ -18,20 +18,20 @@ type Order struct {
 
 func main() {
 
-	var orders Order // Initializing the custom struct
+	// var orders Order // Initializing the custom struct
 
-	// Creating the custom orders
-	orders.CabOrder = []bool{false, false, false, true}
-	orders.HallOrder.Up = []bool{false, false, false}
-	orders.HallOrder.Down = []bool{false, true, false}
-	cab := orders.CabOrder
-	hall := [][]bool{orders.HallOrder.Up, orders.HallOrder.Down}
+	// // Creating the custom orders
+	// orders.CabOrder = []bool{false, false, false, true}
+	// orders.HallOrder.Up = []bool{false, false, false}
+	// orders.HallOrder.Down = []bool{false, true, false}
+	// cab := orders.CabOrder
+	// hall := [][]bool{orders.HallOrder.Up, orders.HallOrder.Down}
 
-	backup.SaveOrderJSON(cab, hall)       // Save order to file
+	// backup.SaveOrderJSON(cab, hall)       // Save order to file
 	cab2, hall2 := backup.LoadOrderJSON() // Read from file
 
 	// Print
 	fmt.Printf("Type: %T, Cab: %v\n", cab2, cab2)
-	fmt.Printf("Type: %T, Cab: %v\n", hall2, hall2)
+	fmt.Printf("Type: %T, Hall: %v\n", hall2, hall2)
 
 }
