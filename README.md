@@ -1,3 +1,15 @@
+Backup
+=======
+
+The backup module contains functions for saving active orders to file. Cab and hall orders are saved to a JSON file structure. For redundancy several files are made when saving orders which are compared when loaded backup up. The general majority wins in case they are not identical.
+
+The orders are saved as boolean values where ``false`` means no order and ``true`` is an active order at the floor the value represents in the array. Cab orders consists of one array for a local elevator while the hall orders are separated in Up and Down arrays for respective buttons.
+
+
+
+
+---------------------------------------------------------------------
+
 Elevator Project
 ================
 

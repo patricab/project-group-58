@@ -21,7 +21,7 @@ func main() {
 	var orders Order // Initializing the custom struct
 
 	// Creating the custom orders
-	orders.CabOrder = []bool{false, false, false}
+	orders.CabOrder = []bool{false, false, false, true}
 	orders.HallOrder.Up = []bool{false, false, false}
 	orders.HallOrder.Down = []bool{false, true, false}
 	cab := orders.CabOrder

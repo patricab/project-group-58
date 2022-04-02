@@ -35,8 +35,11 @@ type Order struct {
 	HallOrder HallOrder
 }
 
+// CONSTANTS TO ACCOUNT FOR
 const fname = "orders.txt"
-const jsonfile = "orders.json"
+const jsonfile = "orders"
+const n_elevators = 3
+const m_floors = 4
 
 func SaveCab(order []bool) {
 	// Saves cab order as a string in a text file.
@@ -55,6 +58,7 @@ func SaveCab(order []bool) {
 
 func SaveOrderJSON(cab []bool, hall [][]bool) {
 
+	n_files := 3
 	var orders Order
 
 	orders.CabOrder = cab
@@ -65,8 +69,11 @@ func SaveOrderJSON(cab []bool, hall [][]bool) {
 	check(errMarshal)
 	fmt.Printf("%T is the type for the data\n", filedata)
 
-	errWrite := ioutil.WriteFile(jsonfile, filedata, 0644)
-	check(errWrite)
+	for i := 0; i < n_files; i++ {
+		filename := jsonfile + strconv.Itoa(i) + ".json"
+		errWrite := ioutil.WriteFile(filename, filedata, 0644)
+		check(errWrite)
+	}
 
 }
 
@@ -84,8 +91,6 @@ func LoadOrderJSON() ([]bool, [][]bool) {
 	hallup := orders.HallOrder.Up
 	halldown := orders.HallOrder.Down
 	hall := [][]bool{hallup, halldown}
-	// fmt.Println(cab)
-	// fmt.Println(hall)
 	return cab, hall
 }
 
