@@ -7,8 +7,8 @@ import (
 )
 
 type HallOrder struct {
-	HallUP   []bool
-	HallDOWN []bool
+	Up   []bool
+	Down []bool
 }
 
 type Order struct {
@@ -17,18 +17,21 @@ type Order struct {
 }
 
 func main() {
-	// Order
-	//orders := LoadOrderJSON()
-	//fmt.Println(orders)
-	// boolOrder := []bool{true, true, true}
-	// backup.SaveCab(boolOrder)
-	// data := backup.LoadCab("orders.txt")
-	// fmt.Println(data)
-	// fmt.Printf("%T\n", data)
 
-	// JSON
-	//json_data := backup.LoadOrderJSON("test.json")
-	cab, hall := backup.LoadOrderJSON("test.json")
-	fmt.Printf("Type: %T, Cab: %v\n", cab, cab)
-	fmt.Printf("Type: %T, Cab: %v\n", hall, hall)
+	var orders Order // Initializing the custom struct
+
+	// Creating the custom orders
+	orders.CabOrder = []bool{false, false, false}
+	orders.HallOrder.Up = []bool{false, false, false}
+	orders.HallOrder.Down = []bool{false, true, false}
+	cab := orders.CabOrder
+	hall := [][]bool{orders.HallOrder.Up, orders.HallOrder.Down}
+
+	backup.SaveOrderJSON(cab, hall)       // Save order to file
+	cab2, hall2 := backup.LoadOrderJSON() // Read from file
+
+	// Print
+	fmt.Printf("Type: %T, Cab: %v\n", cab2, cab2)
+	fmt.Printf("Type: %T, Cab: %v\n", hall2, hall2)
+
 }

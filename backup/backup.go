@@ -26,8 +26,8 @@ import (
 )
 
 type HallOrder struct {
-	HallUP   []bool
-	HallDOWN []bool
+	Up   []bool
+	Down []bool
 }
 
 type Order struct {
@@ -36,6 +36,7 @@ type Order struct {
 }
 
 const fname = "orders.txt"
+const jsonfile = "orders.json"
 
 func SaveCab(order []bool) {
 	// Saves cab order as a string in a text file.
@@ -52,24 +53,39 @@ func SaveCab(order []bool) {
 	check(err)
 }
 
-func SaveOrderJSON(order Order) {
-	fmt.Println("Under production!")
-}
-
-func LoadOrderJSON(filename string) ([]bool, [][]bool) {
-
-	data, err := ioutil.ReadFile(filename)
-	check(err)
+func SaveOrderJSON(cab []bool, hall [][]bool) {
 
 	var orders Order
-	json.Unmarshal(data, &orders)
+
+	orders.CabOrder = cab
+	orders.HallOrder.Up = hall[0]
+	orders.HallOrder.Down = hall[1]
+
+	filedata, errMarshal := json.MarshalIndent(&orders, "", " ")
+	check(errMarshal)
+	fmt.Printf("%T is the type for the data\n", filedata)
+
+	errWrite := ioutil.WriteFile(jsonfile, filedata, 0644)
+	check(errWrite)
+
+}
+
+func LoadOrderJSON() ([]bool, [][]bool) {
+	// Returns Cab and Hall Orders
+
+	data, errRead := ioutil.ReadFile(jsonfile)
+	check(errRead)
+
+	var orders Order
+	errUnmarshal := json.Unmarshal(data, &orders)
+	check(errUnmarshal)
 
 	cab := orders.CabOrder
-	hallup := orders.HallOrder.HallUP
-	halldown := orders.HallOrder.HallDOWN
+	hallup := orders.HallOrder.Up
+	halldown := orders.HallOrder.Down
 	hall := [][]bool{hallup, halldown}
-	fmt.Println(cab)
-	fmt.Println(hall)
+	// fmt.Println(cab)
+	// fmt.Println(hall)
 	return cab, hall
 }
 
