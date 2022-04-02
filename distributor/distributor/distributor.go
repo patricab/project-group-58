@@ -66,6 +66,10 @@ func request_cost() {
 	// sends out request for cost from other nodes and receives cost from other nodes
 }
 
+/**
+ * Automatic reply to cmdACK commands
+ * (Run this function as a goroutine!)
+ */
 func recieved_cmdACK() {
 	select {
 	case m := <-rx:
