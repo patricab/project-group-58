@@ -2,12 +2,18 @@ package distributor
 
 import (
 	. "network/network"
+	"fsm/fsm"
+	"Driver-go/elevio"
 	"strconv"
 )
 
+/* Global variables/channels */
 var id = 0
+var floor int
 var tx = make(chan network.Msg)
 var rx = make(chan network.Msg)
+var btn = make(chan elevio.ButtonEvent)
+var _floor = make(chan int)
 
 // const (
 // 	BT_HallUp   ButtonType = 0
@@ -15,10 +21,22 @@ var rx = make(chan network.Msg)
 // 	BT_Cab                 = 2
 
 func Distributor() {
+	/* Variables */
+	var wg sync.WaitGroup
+
+	/* Initalize required modules */
+	elevio.Init("localhost:15657", 4)
 	go network.Handler(id, tx, rx)
+	go elevio.PollButtons(btn)
+	go elevio.PollFloorSensor(_floor)
+
+	wg.Add(1) // Add Handler to waitgroup
+	go fsm.Handler(btn, floor)
+	wg.Wait() // Run Handler indefinetly
+
 	for {
 		select {
-		case a <- drv_buttons: // Listening to PollButtons (2 is cab -> local order)
+		case a <- btn: // Listening to PollButtons (2 is cab -> local order)
 			// Check if the call is cab (local) or hall (external)
 		case m := <-rx:
 			if m.Command == CmdDelegate {
@@ -84,8 +102,39 @@ func calculate_own_cost(floor, MotorDirection int) {
 
 }
 
-func compare_delegate() {
+func compare_delegate(new_item int) {
 	// Borge
+
+	// Send cost request (!cmdDelegate)
+	msg := Msg{id, 0, CmdReqCost, new_item}
+	tx <- msg
+
+	// Compare replied cost + own cost, which is the lowest?
+
+	// Delegate order/take order itself?
+	msg = Msg{id, dest, CmdDelegate, floor}
+	tx <- msg
+
+	// Append order to queue (or re-evaluate queue priority?)
+
+	// Execute order (send to FSM)
+	btn <- next_order
+
+
+	// COST FUNCTION
+	for {
+		switch
+		case Idle
+			cost = distance_to_floor
+		case Moving
+			Direction
+			PriorityQueue
+		case DoorOpen
+			if obstructed
+				high cost
+
+		
+	}
 
 	// Cost for all elevators are added to a map
 	// Example of a map after succesfully requesting cost from 3 elevators:
@@ -122,8 +171,6 @@ func compare_delegate() {
 	}
 
 	// DELEGATE ORDER
-	msg := Msg{id, dest, network.CmdDelegate, floor}
-	tx <- msg
 	// delegate_order(min_cost) // Assuming this variable has enough info about the elevator
 }
 
