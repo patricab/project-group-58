@@ -1,7 +1,7 @@
 package distributor
 
 import (
-	"network/network"
+	. "network/network"
 	"strconv"
 )
 
@@ -21,7 +21,7 @@ func Distributor() {
 		case a <- drv_buttons: // Listening to PollButtons (2 is cab -> local order)
 			// Check if the call is cab (local) or hall (external)
 		case m := <-rx:
-			if m.Command == network.CmdDelegate {
+			if m.Command == CmdDelegate {
 				// cmdDelegate <- m.Data
 				// TODO: send data to compare/delegate
 			}
@@ -121,8 +121,10 @@ func compare_delegate() {
 		}
 	}
 
-	// DELEGATE
-	delegate_order(min_cost) // Assuming this variable has enough info about the elevator
+	// DELEGATE ORDER
+	msg := Msg{id, dest, network.CmdDelegate, floor}
+	tx <- msg
+	// delegate_order(min_cost) // Assuming this variable has enough info about the elevator
 }
 
 // func node() {
