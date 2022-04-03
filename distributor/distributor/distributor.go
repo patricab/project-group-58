@@ -20,25 +20,15 @@ func Distributor() {
 		select {
 		case a <- drv_buttons: // Listening to PollButtons (2 is cab -> local order)
 			// Check if the call is cab (local) or hall (external)
+		case m := <-rx:
+			if m.Command == network.CmdDelegate {
+				// cmdDelegate <- m.Data
+				// TODO: send data to compare/delegate
+			}
+		}
 		case a: //
 		}
 	}
-}
-
-/*	Author: jacobkris
- *	Receives delegate order from Network --> sends floor x to state machine
- */
-
-func received_cmdDelegate(floor int, cmdDelegate chan int) (DeleCh chan int) {
-
-	checkDelegate := <-cmdDelegate // sets checkDelegate from channel cmdDelegate
-	// set-up channel for communicating trough to the FSM
-	if checkDelegate == 1 {
-		DeleCh := make(chan int)
-		DeleCh <- floor
-
-	}
-	return DeleCh // returns channel for sending floor x value
 }
 
 /*	Author: jacobkris
@@ -64,7 +54,7 @@ func watchdog() {
 	// Patric
 }
 
-func calculate_own_cost(floor, MotorDirection int) int {
+func calculate_own_cost(floor, MotorDirection int) {
 	// Borge
 	// Purpose: Calculates own cost for either ...
 	//				1) ... a hall call the local elevator received and want to compare to others
