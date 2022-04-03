@@ -1,7 +1,7 @@
 {
  "CabOrder": [
   false,
-  false,
+  true,
   false,
   true
  ],
@@ -14,7 +14,12 @@
   "Down": [
    false,
    true,
-   false
+   true
   ]
- }
+ },
+ "PriorityQueue": [
+  4,
+  3,
+  1
+ ]
 }
