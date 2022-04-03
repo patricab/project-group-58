@@ -66,6 +66,8 @@ func received_cmdReqCost() (owncost int) {
  */
 func request_cost() {
 	// sends out request for cost from other nodes and receives cost from other nodes
+	msg := Msg{id, 0, CmdReqCost, new_item}
+	tx <- msg
 }
 
 func watchdog() {
@@ -106,10 +108,8 @@ func compare_delegate(new_item int) {
 	// Borge
 
 	// Send cost request (!cmdDelegate)
-	msg := Msg{id, 0, CmdReqCost, new_item}
-	tx <- msg
-
 	// Compare replied cost + own cost, which is the lowest?
+	request_cost()
 
 	// Delegate order/take order itself?
 	msg = Msg{id, dest, CmdDelegate, floor}
