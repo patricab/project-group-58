@@ -2,49 +2,59 @@ package distributor
 
 import (
 	"Driver-go/elevio"
-	"Network-go/network/peers"
+	"fmt"
 	"fsm/fsm"
-	. "network/network"
-	"sync"
 )
 
 /* Global variables */
-var id
-var floor int
-var costArr []int
+// var id int
+
+// var floor int
+// var costArr []int
 var priorityQueue []elevio.ButtonEvent
-var costTimeout = 500
+
+// var costTimeout = 500
 
 /* Channels */
-var tx = make(chan network.Msg)
-var rx = make(chan network.Msg)
-var _peers = make(chan peers.PeerUpdate)
+// var tx = make(chan network.Msg)
+// var rx = make(chan network.Msg)
+// var _peers = make(chan peers.PeerUpdate)
 var _btn = make(chan elevio.ButtonEvent)
 var btn = make(chan elevio.ButtonEvent)
-var finished = make(chan bool)
+
+// var finished = make(chan bool)
 var _floor = make(chan int)
 var current_state fsm.State
 
 func Distributor(_id int) {
 	/* Variables */
-	var wg sync.WaitGroup
-	id = _id
+	// var wg sync.WaitGroup
+	// id = _id
 
 	/* Initalize required modules */
 	elevio.Init("localhost:15657", 4)
-	go network.Handler(id, tx, rx, _peers)
+	// go network.Handler(strconv.Itoa(id), tx, rx, _peers)
 	go elevio.PollButtons(btn)
 	go elevio.PollFloorSensor(_floor)
 
-	wg.Add(1) // Add Handler to waitgroup
-	go fsm.Handler(_btn, _floor, current_state, finished)
-	wg.Wait() // Run Handler indefinetly
+	// wg.Add(1) // Add Handler to waitgroup
+	// go fsm.Handler(_btn, _floor, current_state, finished)
+	go fsm.Handler(_btn, _floor, current_state)
+	// wg.Wait() // Run Handler indefinetly
 
 	for {
 		select {
 		case b := <-btn: // Listening to PollButtons (2 is cab -> local order)
 			// Check if the call is cab (local) or hall (external)
-			compare_delegate(b)
+			fmt.Println("Captured button")
+			// compare_delegate(b)
+			fmt.Println("Appending to queue")
+			priorityQueue = append(priorityQueue, b)
+
+			// Execute order (send to FSM)
+			fmt.Println("Executing order")
+			_btn <- priorityQueue[0]
+			priorityQueue = priorityQueue[1:]
 			// case m := <-rx:
 			// if m.Command == CmdDelegate {
 			// 	// cmdDelegate <- m.Data
@@ -138,9 +148,11 @@ func compare_delegate(new_item elevio.ButtonEvent) {
 	// tx <- msg
 
 	// Append order to queue (or re-evaluate queue priority?)
+	fmt.Println("Appending to queue")
 	priorityQueue = append(priorityQueue, new_item)
 
 	// Execute order (send to FSM)
+	fmt.Println("Executing order")
 	btn <- priorityQueue[0]
 
 	// Cost for all elevators are added to a map

@@ -1,7 +1,13 @@
 package main
 
-import "distributor/distributor"
+import (
+	. "distributor/distributor"
+	"sync"
+)
 
 func main() {
-	distributor.Distributor()
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go Distributor(1)
+	wg.Wait()
 }

@@ -2,7 +2,7 @@ package main
 
 import (
 	"Driver-go/elevio"
-	"fsm"
+	"fsm/fsm"
 )
 
 /* Variables and structs */
