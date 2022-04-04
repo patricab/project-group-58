@@ -21,7 +21,7 @@ go network.Handler(id, tx, rx)
 The handler takes in 3 parameters:
 - id: Custom ID for the elevator node
 - tx: Tx (transmission) channel: `tx := make(chan network.Msg)`
-- rx: Rx (transmission) channel: `rx := make(chan network.Msg)`
+- rx: Rx (reception) channel: `rx := make(chan network.Msg)`
 
 A message can then be sent through the _Tx_ channel, and recieved through
 the _Rx_ channel by regular channel I/O operations.
@@ -73,8 +73,8 @@ const (
     CmdACK          = 3
 )
 ```
-- CmdReqCost - Request cost from all nodes on the network. (**NB**: Remeber to set the _Dest_ ID to 0 in order to address all nodes on the network). The _Data_ field should contain the floor value that the nodes should base their cost calculations on. 
-- CmdCost - Reply to CmdReqCost command. The _Dest_ should be the ID of the node that requested the cost value. The _Data_ field should hold the calculated cost value.
-- CmdDelegate - Delegation order to specific node in network to service a given floor. The _Data_ field should hold the floor level that the node should service.
-- CmdACK - Heartbeat command. Sending this command with a _Data_ field of _0_ prompts the destination node
+- **CmdReqCost** - Request cost from all nodes on the network. (**NB**: Remeber to set the _Dest_ ID to 0 in order to address all nodes on the network). The _Data_ field should contain the floor value that the nodes should base their cost calculations on. 
+- **CmdCost** - Reply to CmdReqCost command. The _Dest_ should be the ID of the node that requested the cost value. The _Data_ field should hold the calculated cost value.
+- **CmdDelegate** - Delegation order to specific node in network to service a given floor. The _Data_ field should hold the floor level that the node should service.
+- **CmdACK** - Heartbeat command. Sending this command with a _Data_ field of _0_ prompts the destination node
 to reply within a given timeframe, with the same command, and with a _Data_ field of _1_.
