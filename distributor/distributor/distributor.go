@@ -42,28 +42,20 @@ func Distributor() {
 			if m.Command == CmdDelegate {
 				// cmdDelegate <- m.Data
 				// TODO: send data to compare/delegate
+			} else if m.Command == CmdReqCost {
+				received_cmdReqCost()
 			}
 		}
-		case a: //
-		}
 	}
 }
 
-/*	Author: jacobkris
- *	receives cmdReqCost --> starts calculating the cost --> sends the cost back to network
+ /*	receives cmdReqCost --> starts calculating the cost --> sends the cost back to network
  */
-func received_cmdReqCost() (owncost int) {
-
-	checkRq := <-rqch // gets value from command cmdReqCost channel
-	if checkRq == 1 { // checks if value is one
-		owncost := calculate_own_cost() // calculates own cost
-	}
-	return
+func received_cmdReqCost() {
+	msg := Msg{id, m.Id, CmdCost, calculate_own_cost()}	
+	tx <- msg
 }
 
-/*	Author: jacobkris
- *	receives cmdReqCost --> starts calculating the cost --> sends the cost back to network
- */
 func request_cost() {
 	// sends out request for cost from other nodes and receives cost from other nodes
 	msg := Msg{id, 0, CmdReqCost, new_item}
