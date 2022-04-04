@@ -44,17 +44,21 @@ func Distributor(_id int) {
 
 	for {
 		select {
-		case b := <-btn: // Listening to PollButtons (2 is cab -> local order)
-			// Check if the call is cab (local) or hall (external)
-			fmt.Println("Captured button")
-			// compare_delegate(b)
-			fmt.Println("Appending to queue")
-			priorityQueue = append(priorityQueue, b)
+		case b := <-btn:
+			if btn.Button == 2 {
+				// Check if the call is cab (local) or hall (external)
+				fmt.Println("Captured button")
+				// compare_delegate(b)
+				fmt.Println("Appending to queue")
+				priorityQueue = append(priorityQueue, b)
 
-			// Execute order (send to FSM)
-			fmt.Println("Executing order")
-			_btn <- priorityQueue[0]
-			priorityQueue = priorityQueue[1:]
+				// Execute order (send to FSM)
+				fmt.Println("Executing order")
+				_btn <- priorityQueue[0]
+				priorityQueue = priorityQueue[1:]
+			} else {
+				fmt.Println("That's a hall call!")
+			}
 			// case m := <-rx:
 			// if m.Command == CmdDelegate {
 			// 	// cmdDelegate <- m.Data
