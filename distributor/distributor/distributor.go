@@ -1,24 +1,27 @@
 package distributor
 
 import (
-	. "network/network"
-	"fsm/fsm"
 	"Driver-go/elevio"
+	"Network-go/network/peers"
+	"fsm/fsm"
+	. "network/network"
 	"strconv"
+	"time"
 )
 
-/* Global variables/channels */
+/* Global variables */
 var id = 0
 var floor int
+var costArr []int
+var costTimeout = 500
+
+/* Channels */
 var tx = make(chan network.Msg)
 var rx = make(chan network.Msg)
+var _peers = make(chan peers.PeerUpdate)
 var btn = make(chan elevio.ButtonEvent)
 var _floor = make(chan int)
 
-// const (
-// 	BT_HallUp   ButtonType = 0
-// 	BT_HallDown            = 1
-// 	BT_Cab                 = 2
 
 func Distributor() {
 	/* Variables */
@@ -26,7 +29,7 @@ func Distributor() {
 
 	/* Initalize required modules */
 	elevio.Init("localhost:15657", 4)
-	go network.Handler(id, tx, rx)
+	go network.Handler(id, tx, rx, _peers)
 	go elevio.PollButtons(btn)
 	go elevio.PollFloorSensor(_floor)
 
@@ -44,6 +47,8 @@ func Distributor() {
 				// TODO: send data to compare/delegate
 			} else if m.Command == CmdReqCost {
 				received_cmdReqCost()
+			} else if m.Command == CmdCost {
+				append(costArr, m.Data)
 			}
 		}
 	}
@@ -56,10 +61,24 @@ func received_cmdReqCost() {
 	tx <- msg
 }
 
-func request_cost() {
-	// sends out request for cost from other nodes and receives cost from other nodes
-	msg := Msg{id, 0, CmdReqCost, new_item}
-	tx <- msg
+func request_cost(target int, costReady chan bool) {
+	// Check num of connected nodes
+	numNodes := len(_peers.Peers)
+
+	// Send cost req
+	tx <- Msg{id, 0, CmdReqCost, target}
+	timer := time.NewTimer(time.Duration(costTimeout) * time.Millisecond)
+
+	for {
+		select {
+		case <-timer.C:
+			break
+		default:
+			if len(costArr) == numNodes {
+				break
+			}
+		}
+	}
 }
 
 func watchdog() {
