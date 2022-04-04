@@ -17,7 +17,8 @@ var priorityQueue []elevio.ButtonEvent
 
 /* Channels */
 // var tx = make(chan network.Msg)
-// var rx = make(chan network.Msg)
+//var rx = make(chan network.Msg)
+
 // var _peers = make(chan peers.PeerUpdate)
 var _btn = make(chan elevio.ButtonEvent)
 var btn = make(chan elevio.ButtonEvent)
@@ -45,19 +46,11 @@ func Distributor(_id int) {
 	for {
 		select {
 		case b := <-btn:
-			if btn.Button == 2 {
-				// Check if the call is cab (local) or hall (external)
-				fmt.Println("Captured button")
-				// compare_delegate(b)
-				fmt.Println("Appending to queue")
-				priorityQueue = append(priorityQueue, b)
+			if b.Button == 2 { // Cab
+				delegate_cab(b)
+			} else { // Hall
+				compare_delegate(b)
 
-				// Execute order (send to FSM)
-				fmt.Println("Executing order")
-				_btn <- priorityQueue[0]
-				priorityQueue = priorityQueue[1:]
-			} else {
-				fmt.Println("That's a hall call!")
 			}
 			// case m := <-rx:
 			// if m.Command == CmdDelegate {
@@ -140,10 +133,28 @@ func Distributor(_id int) {
 
 // }
 
-func compare_delegate(new_item elevio.ButtonEvent) {
-	// Borge
+func delegate_cab(new_item elevio.ButtonEvent) {
 
-	// Send cost request (!cmdDelegate)
+	fmt.Println("Appending to queue")
+	priorityQueue = append(priorityQueue, new_item)
+
+	fmt.Println("Executing order")
+	_btn <- priorityQueue[0]
+	priorityQueue = priorityQueue[1:]
+}
+
+func compare_delegate(new_item elevio.ButtonEvent) {
+
+	if false {
+		// Add hall call to FSM?
+	} else {
+		fmt.Println("Appending to queue")
+		priorityQueue = append(priorityQueue, new_item)
+
+		fmt.Println("Executing order")
+		_btn <- priorityQueue[0]
+		priorityQueue = priorityQueue[1:]
+	}
 	// Compare replied cost + own cost, which is the lowest?
 	// request_cost()
 
@@ -152,12 +163,12 @@ func compare_delegate(new_item elevio.ButtonEvent) {
 	// tx <- msg
 
 	// Append order to queue (or re-evaluate queue priority?)
-	fmt.Println("Appending to queue")
-	priorityQueue = append(priorityQueue, new_item)
+	// fmt.Println("Appending to queue")
+	// priorityQueue = append(priorityQueue, new_item)
 
-	// Execute order (send to FSM)
-	fmt.Println("Executing order")
-	btn <- priorityQueue[0]
+	// // Execute order (send to FSM)
+	// fmt.Println("Executing order")
+	// btn <- priorityQueue[0]
 
 	// Cost for all elevators are added to a map
 	// Example of a map after succesfully requesting cost from 3 elevators:
