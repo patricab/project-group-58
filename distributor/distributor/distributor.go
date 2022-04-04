@@ -76,29 +76,37 @@ func watchdog() {
 
 func calculate_own_cost(floor, MotorDirection int) {
 	// Borge
-	// Purpose: Calculates own cost for either ...
-	//				1) ... a hall call the local elevator received and want to compare to others
-	//				2) ... another elevator requests this elevator's hall cost
 
-	// Cost algorithm: [cost] = calculate_own_cost(floor, MotorDirection)
+	// Switch case focuses on calculating cost intuitively based on the time it would take in seconds
+	// Constants used
+	//		Floor travel time (2-3 seconds?)
+	//		Moving penalty (1)
+	// Used variables
+	//		Current floor
+	//		Destination floor
+	FLOOR_TRAVEL_TIME := 2 // sec
+	MOVING_PENALTY := 1 // To distinguish moving elevators from idle ones, so as to not inconvenience anyone waiting for an elevator
+	DOOR_OPEN_TIME := 3 // sec
 
-	// Distance from desired floor: 				+2*distance [int]
-	//		This includes an elevator going
-	// Motor direction facing way of desired floor: -1*distance [int]
-	// Motor direction facing other way: 			+1*distance [int]
+	switch fsm.States {
 
-	// Problem scenario:
-	//		One elevator with distance cost 2 but wrong motor direction has the same cost as a
-	//		elevator a whole floor further away but with correct motor direction. If the first elevator is idle,
-	//		it obviously is faster than the other.
+	case FailureMode:
+		cost = 999
 
-	// Anything else to include?
-	// 		- Amount of stops on the way.
-	//		- Distance based on distance to active order + distance from that order floor to desired floor.
+	case DoorsOpen:
+		if fsm.obstructed {
+			cost = 999
+		} else {
+			cost = abs(curr_floor-dest_floor)*FLOOR_TRAVEL_TIME + DOOR_OPEN_TIME/2
+		}
 
-	desired_floor := 1 // PLACEHOLDER
+	case Idle:
+		cost = abs(curr_floor-dest_floor)*FLOOR_TRAVEL_TIME
 
-	// MAGIC
+	case Moving: // If its moving, it has an order
+		// cost is distance from current floor
+		cost = abs(curr_floor-dest_floor)*FLOOR_TRAVEL_TIME*FLOOR_TRAVEL_TIME + MOVING_PENALTY
+	}
 
 	return cost
 
