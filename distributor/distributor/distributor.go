@@ -21,6 +21,7 @@ var rx = make(chan network.Msg)
 var _peers = make(chan peers.PeerUpdate)
 var _btn = make(chan elevio.ButtonEvent)
 var btn = make(chan elevio.ButtonEvent)
+var finished = make(chan bool)
 var _floor = make(chan int)
 var current_state fsm.State
 
@@ -35,7 +36,7 @@ func Distributor() {
 	go elevio.PollFloorSensor(_floor)
 
 	wg.Add(1) // Add Handler to waitgroup
-	go fsm.Handler(_btn, _floor, current_state)
+	go fsm.Handler(_btn, _floor, current_state, finished)
 	wg.Wait() // Run Handler indefinetly
 
 	for {
