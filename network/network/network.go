@@ -25,7 +25,7 @@ type Msg struct {
 	Data    int // both cost and floor
 }
 
-func Handler(Id string, Tx chan Msg, Rx chan Msg) {
+func Handler(Id string, Tx chan Msg, Rx chan Msg, Peers chan peers.PeerUpdate) {
 	// var dest string
 	// flag.StringVar(&id, "id", "", "id of this peer")
 	// // flag.StringVar(&dest, "dest", "", "destination id")
@@ -43,8 +43,10 @@ func Handler(Id string, Tx chan Msg, Rx chan Msg) {
 	}
 
 	// Channel for receiving updates on the id's of the peers that are
-	// alive on the network
-	peerUpdateCh := make(chan peers.PeerUpdate)
+	// alive on the network ==> Peers
+
+	// peerUpdateCh := make(chan peers.PeerUpdate)
+
 	// Disable/enable the transmitter after it has been started.
 	peerTxEnable := make(chan bool)
 
@@ -53,7 +55,7 @@ func Handler(Id string, Tx chan Msg, Rx chan Msg) {
 
 	/* Peers Tx/Rx pair */
 	go peers.Transmitter(15648, Id, peerTxEnable)
-	go peers.Receiver(15648, peerUpdateCh)
+	go peers.Receiver(15648, Peers)
 
 	// We make channels for sending and receiving our custom data types
 	// _tx := make(chan Msg)
