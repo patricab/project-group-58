@@ -1,10 +1,11 @@
 package distributor
 
 import (
-	. "network/network"
-	"fsm/fsm"
 	"Driver-go/elevio"
+	"fsm/fsm"
+	. "network/network"
 	"strconv"
+	"sync"
 )
 
 /* Global variables/channels */
@@ -14,6 +15,7 @@ var tx = make(chan network.Msg)
 var rx = make(chan network.Msg)
 var btn = make(chan elevio.ButtonEvent)
 var _floor = make(chan int)
+var current_state fsm.State
 
 // const (
 // 	BT_HallUp   ButtonType = 0
@@ -31,7 +33,7 @@ func Distributor() {
 	go elevio.PollFloorSensor(_floor)
 
 	wg.Add(1) // Add Handler to waitgroup
-	go fsm.Handler(btn, floor)
+	go fsm.Handler(btn, _floor, current_state)
 	wg.Wait() // Run Handler indefinetly
 
 	for {
@@ -49,10 +51,10 @@ func Distributor() {
 	}
 }
 
- /*	receives cmdReqCost --> starts calculating the cost --> sends the cost back to network
+/*	receives cmdReqCost --> starts calculating the cost --> sends the cost back to network
  */
 func received_cmdReqCost() {
-	msg := Msg{id, m.Id, CmdCost, calculate_own_cost()}	
+	msg := Msg{id, m.Id, CmdCost, calculate_own_cost()}
 	tx <- msg
 }
 
@@ -66,7 +68,7 @@ func watchdog() {
 	// Patric
 }
 
-func calculate_own_cost(floor, MotorDirection int) {
+func calculate_own_cost() (cost int) {
 	// Borge
 
 	// Switch case focuses on calculating cost intuitively based on the time it would take in seconds
@@ -76,26 +78,24 @@ func calculate_own_cost(floor, MotorDirection int) {
 	// Used variables
 	//		Current floor
 	//		Destination floor
+
 	FLOOR_TRAVEL_TIME := 2 // sec
-	MOVING_PENALTY := 1 // To distinguish moving elevators from idle ones, so as to not inconvenience anyone waiting for an elevator
-	DOOR_OPEN_TIME := 3 // sec
+	MOVING_PENALTY := 1    // To distinguish moving elevators from idle ones, so as to not inconvenience anyone waiting for an elevator
+	DOOR_OPEN_TIME := 3    // sec
 
-	switch fsm.States {
+	switch current_state {
 
-	case FailureMode:
-		cost = 999
+	// case FailureMode:
+	// 	cost = 999
 
-	case DoorsOpen:
-		if fsm.obstructed {
-			cost = 999
-		} else {
-			cost = abs(curr_floor-dest_floor)*FLOOR_TRAVEL_TIME + DOOR_OPEN_TIME/2
-		}
+	case fsm.DOORS_OPEN:
+		// No obstruction
+		cost = abs(curr_floor-dest_floor)*FLOOR_TRAVEL_TIME + DOOR_OPEN_TIME/2
 
-	case Idle:
-		cost = abs(curr_floor-dest_floor)*FLOOR_TRAVEL_TIME
+	case fsm.IDLE:
+		cost = abs(curr_floor-dest_floor) * FLOOR_TRAVEL_TIME
 
-	case Moving: // If its moving, it has an order
+	case fsm.MOVING: // If its moving, it has an order
 		// cost is distance from current floor
 		cost = abs(curr_floor-dest_floor)*FLOOR_TRAVEL_TIME*FLOOR_TRAVEL_TIME + MOVING_PENALTY
 	}
@@ -119,22 +119,6 @@ func compare_delegate(new_item int) {
 
 	// Execute order (send to FSM)
 	btn <- next_order
-
-
-	// COST FUNCTION
-	for {
-		switch
-		case Idle
-			cost = distance_to_floor
-		case Moving
-			Direction
-			PriorityQueue
-		case DoorOpen
-			if obstructed
-				high cost
-
-		
-	}
 
 	// Cost for all elevators are added to a map
 	// Example of a map after succesfully requesting cost from 3 elevators:
