@@ -9,7 +9,7 @@ import (
 )
 
 /* Global variables */
-var id = 0
+var id
 var floor int
 var costArr []int
 var priorityQueue []elevio.ButtonEvent
@@ -25,9 +25,10 @@ var finished = make(chan bool)
 var _floor = make(chan int)
 var current_state fsm.State
 
-func Distributor() {
+func Distributor(_id int) {
 	/* Variables */
 	var wg sync.WaitGroup
+	id = _id
 
 	/* Initalize required modules */
 	elevio.Init("localhost:15657", 4)
