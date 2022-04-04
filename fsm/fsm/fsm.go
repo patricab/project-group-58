@@ -7,9 +7,18 @@ import (
 )
 
 /* Global variables */
+type State int
+
 var _doors_open bool = false
 
-func Handler(button chan elevio.ButtonEvent, floor chan int) {
+/* Structs and enums */
+const (
+	IDLE       State = 1
+	MOVING     State = 2
+	DOORS_OPEN State = 3
+)
+
+func Handler(button chan elevio.ButtonEvent, floor chan int, current_state State) {
 	/* Local variables */
 	var _floor int
 	var target elevio.ButtonEvent
@@ -21,6 +30,7 @@ func Handler(button chan elevio.ButtonEvent, floor chan int) {
 
 	var dir elevio.MotorDirection = elevio.MD_Stop
 	elevio.SetMotorDirection(dir)
+	current_state = IDLE
 
 	go elevio.PollObstructionSwitch(obstr)
 	go elevio.PollStopButton(stop)
@@ -35,6 +45,7 @@ func Handler(button chan elevio.ButtonEvent, floor chan int) {
 				dir = elevio.MD_Up
 			}
 			elevio.SetMotorDirection(dir)
+			current_state = MOVING
 			elevio.SetButtonLamp(target.Button, target.Floor, true)
 
 		case _floor = <-floor:
@@ -42,24 +53,31 @@ func Handler(button chan elevio.ButtonEvent, floor chan int) {
 			if _floor > target.Floor {
 				dir = elevio.MD_Down
 				elevio.SetMotorDirection(dir)
+				current_state = MOVING
 				elevio.SetFloorIndicator(_floor)
 			} else if _floor < target.Floor {
 				dir = elevio.MD_Up
 				elevio.SetMotorDirection(dir)
+				current_state = MOVING
 				elevio.SetFloorIndicator(_floor)
 			} else if _floor == target.Floor {
 				dir = elevio.MD_Stop
 				elevio.SetButtonLamp(target.Button, target.Floor, false)
 				elevio.SetMotorDirection(dir)
+				current_state = IDLE
 				elevio.SetFloorIndicator(_floor)
 
+				current_state = DOORS_OPEN
 				open_door()
+				current_state = IDLE
 			}
 
 		case a := <-obstr:
 			fmt.Printf("%+v\n", a)
 			if _doors_open {
+				current_state = DOORS_OPEN
 				open_door()
+				current_state = IDLE
 			}
 
 		case a := <-stop:
@@ -73,6 +91,7 @@ func Handler(button chan elevio.ButtonEvent, floor chan int) {
 
 			/* Stop elevator! */
 			elevio.SetMotorDirection(elevio.MD_Stop)
+			current_state = IDLE
 		}
 	}
 }
