@@ -11,19 +11,13 @@ import (
 	"time"
 )
 
-type Msg struct {
-	Id      int
-	Dest    int
-	Command Cmd
-	Data    int // both cost and floor
-}
-
 /* Global variables */
-// var id int
+var id int
+var floor int
 
-// var floor int
 // var costArr []int
-var priorityQueue []int //[]elevio.ButtonEvent
+// var priorityQueue []int //[]elevio.ButtonEvent
+var priorityQueue = []elevio.ButtonEvent{elevio.ButtonEvent{0, elevio.BT_Cab}}
 var costArray []Msg
 
 // var costTimeout = 500
@@ -32,12 +26,14 @@ var costArray []Msg
 var tx = make(chan network.Msg)
 var rx = make(chan network.Msg)
 
-var _peers = make(chan peers.PeerUpdate)
+var _peers_chan = make(chan peers.PeerUpdate)
+var _peers peers.PeerUpdate
 var _btn = make(chan elevio.ButtonEvent)
 var btn = make(chan elevio.ButtonEvent)
 
 // var finished = make(chan bool)
 var _floor = make(chan int)
+var current_floor = make(chan int)
 var current_state fsm.State
 
 const N_ELEVATORS = 3
@@ -45,51 +41,72 @@ const N_ELEVATORS = 3
 func Distributor(_id int) {
 	/* Variables */
 	// var wg sync.WaitGroup
-	// id = _id
+	finished := make(chan bool)
+	id = _id
 
 	/* Initalize required modules */
 	elevio.Init("localhost:15657", 4)
-	go network.Handler(strconv.Itoa(_id), tx, rx, _peers)
+	go network.Handler(strconv.Itoa(_id), tx, rx, _peers_chan)
 	go elevio.PollButtons(btn)
 	go elevio.PollFloorSensor(_floor)
+	go elevio.PollFloorSensor(current_floor)
 
 	// wg.Add(1) // Add Handler to waitgroup
-	// go fsm.Handler(_btn, _floor, current_state, finished)
-	go fsm.Handler(_btn, _floor, current_state)
+	go fsm.Handler(_btn, _floor, current_state, finished)
 	// wg.Wait() // Run Handler indefinetly
+
+	go func() {
+		for {
+			if len(priorityQueue) > 0 {
+				fmt.Println("Sending next to FSM")
+				_btn <- priorityQueue[0]
+				<-finished
+				fmt.Println("Reached floor")
+				priorityQueue = priorityQueue[1:]
+			}
+		}
+	}()
+
+	go func() {
+		floor = <-current_floor
+	}()
+
+	go func() {
+		_peers = <-_peers_chan
+	}()
 
 	for {
 		select {
 		case b := <-btn:
 			if b.Button == 2 { // Cab
-				add_to_queue(b.Floor)
+				add_to_queue(b)
 			} else { // Hall
 				delegate_hall(b)
 			}
-		case m := <-rx:
-			if m.Command == CmdDelegate {
-				add_to_queue(m.Data)
-			} else if m.Command == CmdReqCost {
-				cost := calculate_own_cost(m.Data)
-				m.Command = CmdCost // CmdCost
-				m.Data = cost
-				tx <- m
-			} else if m.Command == CmdCost {
-				costArray = append(costArray, m)
-			}
+			// case m := <-rx:
+			// 	if m.Command == CmdDelegate {
+			// 		add_to_queue(m.Data)
+			// 	} else if m.Command == CmdReqCost {
+			// 		cost := calculate_own_cost(m.Data)
+			// 		m.Command = CmdCost // CmdCost
+			// 		m.Data = cost
+			// 		tx <- m
+			// 	} else if m.Command == CmdCost {
+			// 		costArray = append(costArray, m)
+			// 	}
+			// }
 		}
 	}
 }
 
 /*	receives cmdReqCost --> starts calculating the cost --> sends the cost back to network
  */
-// func received_cmdReqCost(dest int) {
-// 	msg := Msg{id, dest, CmdCost, calculate_own_cost()}
+// func received_cmdReqCost(m Msg, dest int) {
+// 	msg := Msg{id, dest, CmdCost, calculate_own_cost(m.Data)}
 // 	tx <- msg
 // }
 
 func request_cost(target int) {
-
 	// Check num of connected nodes
 	numNodes := len(_peers.Peers) - 1
 	//timer := time.NewTimer(time.Duration(costTimeout) * time.Millisecond)
@@ -104,7 +121,7 @@ func request_cost(target int) {
 			return
 		default:
 			if len(costArray) == numNodes {
-				break
+				return
 			}
 		}
 	}
@@ -122,32 +139,33 @@ func calculate_own_cost(dest_floor int) (cost int) {
 
 	switch current_state {
 	case fsm.DOORS_OPEN:
-		cost = abs(curr_floor-dest_floor)*FLOOR_TRAVEL_TIME + DOOR_OPEN_TIME/2
-		return cost
+		cost = int(Abs(floor-dest_floor)*FLOOR_TRAVEL_TIME + DOOR_OPEN_TIME/2)
 	case fsm.IDLE:
-		cost = abs(curr_floor-dest_floor) * FLOOR_TRAVEL_TIME
-		return cost
+		cost = Abs(floor-dest_floor) * FLOOR_TRAVEL_TIME
 	case fsm.MOVING:
-		cost = abs(curr_floor-dest_floor)*FLOOR_TRAVEL_TIME*FLOOR_TRAVEL_TIME + MOVING_PENALTY
-		return cost
+		cost = Abs(floor-dest_floor)*FLOOR_TRAVEL_TIME*FLOOR_TRAVEL_TIME + MOVING_PENALTY
 	}
+
+	return cost
 }
 
-func add_to_queue(new_item int) {
+// Abs returns the absolute value of x.
+func Abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
 
+func add_to_queue(new_item elevio.ButtonEvent) {
 	fmt.Println("Appending to queue")
 	priorityQueue = append(priorityQueue, new_item)
-
-	fmt.Println("Executing order")
-	_btn <- priorityQueue[0]
-	priorityQueue = priorityQueue[1:]
 }
 
 func delegate_hall(new_item elevio.ButtonEvent) {
-
 	// Msg
-	delegate_id := -1
-	delegate_dest := -1
+	delegate_id := 1
+	delegate_dest := 1
 	local_msg := Msg{delegate_id, delegate_dest, CmdCost, 0} // For comparison
 
 	// Calculate own cost
@@ -173,7 +191,7 @@ func delegate_hall(new_item elevio.ButtonEvent) {
 	}
 
 	if local_delegation {
-		priorityQueue = append(priorityQueue)
+		priorityQueue = append(priorityQueue, new_item)
 	} else {
 		msg := Msg{id, delegate_dest, CmdDelegate, dest_floor}
 		tx <- msg
