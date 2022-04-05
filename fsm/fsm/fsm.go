@@ -18,8 +18,7 @@ const (
 	DOORS_OPEN State = 3
 )
 
-// func Handler(button chan elevio.ButtonEvent, floor chan int, current_state State, finished chan bool) {
-func Handler(button chan elevio.ButtonEvent, floor chan int, current_state State) {
+func Handler(button chan elevio.ButtonEvent, floor chan int, current_state State, finished chan bool) {
 	/* Local variables */
 	var _floor int
 	var target elevio.ButtonEvent
@@ -71,7 +70,7 @@ func Handler(button chan elevio.ButtonEvent, floor chan int, current_state State
 				current_state = DOORS_OPEN
 				open_door()
 				current_state = IDLE
-				// finished <- true
+				finished <- true
 			}
 
 		case a := <-obstr:
