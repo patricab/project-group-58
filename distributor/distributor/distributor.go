@@ -7,7 +7,6 @@ import (
 	"network/network"
 	. "network/network"
 	"strconv"
-	"time"
 )
 
 /* Global variables */
@@ -32,6 +31,7 @@ var btn = make(chan elevio.ButtonEvent)
 // var finished = make(chan bool)
 var floor_chan = make(chan int)
 var current_floor = make(chan int)
+var all_costs = make(chan bool)
 
 // var current_state fsm.State
 // var current_state_chan chan fsm.State
@@ -104,7 +104,11 @@ func Distributor(_id int, port int, _numNodes int) {
 			} else if m.Command == CmdCost {
 				fmt.Printf("[%v] Received cost from node\n", id)
 				costArray = append(costArray, m)
-				fmt.Printf("[%v] Cost array: %d\n", id, costArray)
+				if len(costArray) == numNodes {
+					fmt.Println("Received cost from all nodes")
+					all_costs <- true
+				}
+				// fmt.Printf("[%v] Cost array: %d\n", id, costArray)
 			}
 		}
 	}
@@ -192,7 +196,7 @@ func delegate_hall(new_item elevio.ButtonEvent) {
 	costArray = append(costArray, local_msg)
 	// request_cost(dest_floor)
 	tx <- Msg{id, 0, CmdReqCost, dest_floor}
-	<-time.After(3 * time.Second)
+	<-all_costs
 	fmt.Printf("[%v] Cost array: %d\n", id, costArray)
 
 	// Delegate to lowest cost (Default: local)
@@ -202,7 +206,7 @@ func delegate_hall(new_item elevio.ButtonEvent) {
 	for _, message := range costArray {
 		if message.Data < min_cost {
 			min_cost = message.Data
-			delegate_dest = message.Dest
+			delegate_dest = message.Id
 			local_delegation = false
 		} else {
 			local_delegation = true
