@@ -91,8 +91,8 @@ func Handler(button chan elevio.ButtonEvent, floor chan int, current_state State
 			}
 
 			/* Stop elevator! */
-			elevio.SetMotorDirection(elevio.MD_Stop)
-			current_state = IDLE
+			// elevio.SetMotorDirection(elevio.MD_Stop)
+			// current_state = IDLE
 		}
 	}
 }

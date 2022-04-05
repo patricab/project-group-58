@@ -90,13 +90,16 @@ func Distributor(_id int, port int) {
 		case m := <-rx:
 			if m.Command == CmdDelegate {
 				// add_to_queue(m.Data)
+				fmt.Printf("[%v] Received cmdDelegate\n", id)
 				add_to_queue(elevio.ButtonEvent{m.Data, elevio.BT_Cab})
 			} else if m.Command == CmdReqCost {
+				fmt.Printf("[%v] Received cmdReqCost\n", id)
 				cost := calculate_own_cost(m.Data)
 				m.Command = CmdCost // CmdCost
 				m.Data = cost
 				tx <- m
 			} else if m.Command == CmdCost {
+				fmt.Printf("[%v] Received cost from node\n", id)
 				costArray = append(costArray, m)
 			}
 		}
@@ -124,7 +127,7 @@ func request_cost(target int) {
 			return
 		default:
 			if len(costArray) == numNodes {
-				fmt.Println("Recieved all costs")
+				fmt.Println("Received all costs")
 				return
 			}
 		}
@@ -140,6 +143,8 @@ func calculate_own_cost(dest_floor int) (cost int) {
 	FLOOR_TRAVEL_TIME := 2
 	MOVING_PENALTY := 1
 	DOOR_OPEN_TIME := 3
+
+	fmt.Printf("[%v] Calc_cost: current floor %v and desired floor %v\n", id, floor, dest_floor)
 
 	switch current_state {
 	case fsm.DOORS_OPEN:
@@ -176,6 +181,7 @@ func delegate_hall(new_item elevio.ButtonEvent) {
 	// Calculate own cost
 	dest_floor := new_item.Floor
 	local_msg.Data = calculate_own_cost(dest_floor)
+	fmt.Printf("[%v] Own cost is %v\n", id, local_msg.Data)
 
 	// Request other elevator's cost
 	costArray = nil // Clear all elements
