@@ -4,6 +4,8 @@ import (
 	"Driver-go/elevio"
 	"fmt"
 	"fsm/fsm"
+	"network/network"
+	. "network/network"
 )
 
 /* Global variables */
@@ -16,8 +18,8 @@ var priorityQueue []elevio.ButtonEvent
 // var costTimeout = 500
 
 /* Channels */
-// var tx = make(chan network.Msg)
-//var rx = make(chan network.Msg)
+var tx = make(chan network.Msg)
+var rx = make(chan network.Msg)
 
 // var _peers = make(chan peers.PeerUpdate)
 var _btn = make(chan elevio.ButtonEvent)
@@ -47,21 +49,22 @@ func Distributor(_id int) {
 		select {
 		case b := <-btn:
 			if b.Button == 2 { // Cab
-				delegate_cab(b)
+				add_to_queue(b)
 			} else { // Hall
 				compare_delegate(b)
-
 			}
-			// case m := <-rx:
-			// if m.Command == CmdDelegate {
-			// 	// cmdDelegate <- m.Data
-			// 	// TODO: send data to compare/delegate
-			// 	compare_delegate(m.Data)
-			// } else if m.Command == CmdReqCost {
-			// 	received_cmdReqCost(m.Id)
-			// } else if m.Command == CmdCost {
-			// 	append(costArr, m.Data)
-			// }
+		case m := <-rx:
+			if m.Command == CmdDelegate {
+				add_to_queue(m.Data)
+			} else if m.Command == CmdReqCost {
+				cost := calculate_own_cost(m.Data)
+				m.Command = CmdCost // CmdCost
+				m.Data = cost
+				tx <- m
+			} else if m.Command == CmdCost {
+				fmt.Println("Append cost to cost array")
+				// Add cost to cost array (append(costArr, m.Data))
+			}
 		}
 	}
 }
@@ -133,7 +136,7 @@ func Distributor(_id int) {
 
 // }
 
-func delegate_cab(new_item elevio.ButtonEvent) {
+func add_to_queue(new_item elevio.ButtonEvent) {
 
 	fmt.Println("Appending to queue")
 	priorityQueue = append(priorityQueue, new_item)
