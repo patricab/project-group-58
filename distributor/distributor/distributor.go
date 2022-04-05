@@ -7,6 +7,7 @@ import (
 	"fsm/fsm"
 	"network/network"
 	. "network/network"
+	"strconv"
 	"time"
 )
 
@@ -48,7 +49,7 @@ func Distributor(_id int) {
 
 	/* Initalize required modules */
 	elevio.Init("localhost:15657", 4)
-	// go network.Handler(strconv.Itoa(id), tx, rx, _peers)
+	go network.Handler(strconv.Itoa(_id), tx, rx, _peers)
 	go elevio.PollButtons(btn)
 	go elevio.PollFloorSensor(_floor)
 
@@ -145,7 +146,9 @@ func add_to_queue(new_item int) {
 func delegate_hall(new_item elevio.ButtonEvent) {
 
 	// Msg
-	local_msg := Msg{0, 0, CmdCost, 0}
+	delegate_id := -1
+	delegate_dest := -1
+	local_msg := Msg{delegate_id, delegate_dest, CmdCost, 0} // For comparison
 
 	// Calculate own cost
 	dest_floor := new_item.Floor
@@ -158,36 +161,22 @@ func delegate_hall(new_item elevio.ButtonEvent) {
 
 	// Delegate to lowest cost (Default: local)
 	min_cost := local_msg.Data
-	delegate_id := 99
+	local_delegation := false
 
 	for _, message := range costArray {
 		if message.Data < min_cost {
 			min_cost = message.Data
-			delegate_id = message.Id
+			delegate_dest = message.Dest
+		} else {
+			local_delegation = true
 		}
 	}
 
-	dest := 10
-
-	msg := Msg{
-		delegate_id,
-		dest,
-		CmdDelegate,
-		dest_floor,
+	if local_delegation {
+		priorityQueue = append(priorityQueue)
+	} else {
+		msg := Msg{id, delegate_dest, CmdDelegate, dest_floor}
+		tx <- msg
 	}
 
-	tx <- msg
 }
-
-// func node() {
-// 	go Distributor()
-// 	go Network()
-// 	go FSM()
-// }
-
-// func main() {
-
-// 	go node()
-// 	go node()
-// 	go node()
-// }
