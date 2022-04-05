@@ -36,16 +36,20 @@ var _floor = make(chan int)
 var current_floor = make(chan int)
 var current_state fsm.State
 
-const N_ELEVATORS = 3
+const N_ELEVATORS = 2
 
-func Distributor(_id int) {
+func Distributor(_id int, port int) {
 	/* Variables */
 	// var wg sync.WaitGroup
 	finished := make(chan bool)
 	id = _id
+	fmt.Printf("Current ID: %d\n", id)
 
 	/* Initalize required modules */
-	elevio.Init("localhost:15657", 4)
+	host := fmt.Sprintf("localhost:%d", port)
+	elevio.Init(host, 4)
+	fmt.Printf("[%v] Initializing.\n", id)
+
 	go network.Handler(strconv.Itoa(_id), tx, rx, _peers_chan)
 	go elevio.PollButtons(btn)
 	go elevio.PollFloorSensor(_floor)
@@ -58,10 +62,10 @@ func Distributor(_id int) {
 	go func() {
 		for {
 			if len(priorityQueue) > 0 {
-				fmt.Println("Sending next to FSM")
+				fmt.Printf("[%v] Sending next to FSM\n", id)
 				_btn <- priorityQueue[0]
 				<-finished
-				fmt.Println("Reached floor")
+				fmt.Printf("[%v] Reached floor\n", id)
 				priorityQueue = priorityQueue[1:]
 			}
 		}
@@ -83,44 +87,44 @@ func Distributor(_id int) {
 			} else { // Hall
 				delegate_hall(b)
 			}
-			// case m := <-rx:
-			// 	if m.Command == CmdDelegate {
-			// 		add_to_queue(m.Data)
-			// 	} else if m.Command == CmdReqCost {
-			// 		cost := calculate_own_cost(m.Data)
-			// 		m.Command = CmdCost // CmdCost
-			// 		m.Data = cost
-			// 		tx <- m
-			// 	} else if m.Command == CmdCost {
-			// 		costArray = append(costArray, m)
-			// 	}
-			// }
+		case m := <-rx:
+			if m.Command == CmdDelegate {
+				// add_to_queue(m.Data)
+				add_to_queue(elevio.ButtonEvent{m.Data, elevio.BT_Cab})
+			} else if m.Command == CmdReqCost {
+				cost := calculate_own_cost(m.Data)
+				m.Command = CmdCost // CmdCost
+				m.Data = cost
+				tx <- m
+			} else if m.Command == CmdCost {
+				costArray = append(costArray, m)
+			}
 		}
 	}
 }
 
 /*	receives cmdReqCost --> starts calculating the cost --> sends the cost back to network
  */
-// func received_cmdReqCost(m Msg, dest int) {
-// 	msg := Msg{id, dest, CmdCost, calculate_own_cost(m.Data)}
-// 	tx <- msg
-// }
 
 func request_cost(target int) {
 	// Check num of connected nodes
 	numNodes := len(_peers.Peers) - 1
+	fmt.Printf("[%v] Number of nodes: %d\n", id, numNodes)
 	//timer := time.NewTimer(time.Duration(costTimeout) * time.Millisecond)
 	timeout := time.After(500 * time.Millisecond)
 
 	// Send cost req
+	fmt.Printf("[%v] Sending cost request\n", id)
 	tx <- Msg{id, 0, CmdReqCost, target}
 
 	for {
 		select {
 		case <-timeout:
+			fmt.Println("ReqCost timeout")
 			return
 		default:
 			if len(costArray) == numNodes {
+				fmt.Println("Recieved all costs")
 				return
 			}
 		}
@@ -158,8 +162,9 @@ func Abs(x int) int {
 }
 
 func add_to_queue(new_item elevio.ButtonEvent) {
-	fmt.Println("Appending to queue")
+	fmt.Printf("[%v] Appending to queue\n", id)
 	priorityQueue = append(priorityQueue, new_item)
+	fmt.Printf("[%v] Queue: %d\tLength: %d\n", id, priorityQueue, len(priorityQueue))
 }
 
 func delegate_hall(new_item elevio.ButtonEvent) {
@@ -192,6 +197,7 @@ func delegate_hall(new_item elevio.ButtonEvent) {
 
 	if local_delegation {
 		priorityQueue = append(priorityQueue, new_item)
+		fmt.Printf("[%v] Queue: %d\tLength: %d\n", id, priorityQueue, len(priorityQueue))
 	} else {
 		msg := Msg{id, delegate_dest, CmdDelegate, dest_floor}
 		tx <- msg
