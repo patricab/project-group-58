@@ -88,7 +88,7 @@ func Distributor(_id int, port int, _numNodes int) {
 			if b.Button == 2 { // Cab
 				add_to_queue(b)
 			} else { // Hall
-				delegate_hall(b)
+				go delegate_hall(b)
 			}
 		case m := <-rx:
 			if m.Command == CmdDelegate {
@@ -98,12 +98,13 @@ func Distributor(_id int, port int, _numNodes int) {
 			} else if m.Command == CmdReqCost {
 				fmt.Printf("[%v] Received cmdReqCost\n", id)
 				cost := calculate_own_cost(m.Data)
-				fmt.Printf("[%v] Calculated cost", id)
+				fmt.Printf("[%v] Calculated cost: %d", id, cost)
 				msg := Msg{id, m.Id, CmdCost, cost}
 				tx <- msg
 			} else if m.Command == CmdCost {
 				fmt.Printf("[%v] Received cost from node\n", id)
 				costArray = append(costArray, m)
+				fmt.Printf("[%v] Cost array: %d\n", id, costArray)
 			}
 		}
 	}
@@ -112,28 +113,28 @@ func Distributor(_id int, port int, _numNodes int) {
 /*	receives cmdReqCost --> starts calculating the cost --> sends the cost back to network
  */
 
-func request_cost(target int) {
-	// Check num of connected nodes
-	// numNodes := len(_peers.Peers) - 1
-	//timer := time.NewTimer(time.Duration(costTimeout) * time.Millisecond)
+// func request_cost(target int) {
+// 	// Check num of connected nodes
+// 	// numNodes := len(_peers.Peers) - 1
+// 	//timer := time.NewTimer(time.Duration(costTimeout) * time.Millisecond)
 
-	// Send cost req
-	fmt.Printf("[%v] Sending cost request\n", id)
-	tx <- Msg{id, 0, CmdReqCost, target}
+// 	// Send cost req
+// 	fmt.Printf("[%v] Sending cost request\n", id)
+// 	tx <- Msg{id, 0, CmdReqCost, target}
 
-	for {
-		select {
-		case <-time.After(3 * time.Second):
-			fmt.Println("Timeout: request_cost")
-			return
-		default:
-			if len(costArray) == numNodes {
-				fmt.Println("Received cost from all")
-				return
-			}
-		}
-	}
-}
+// 	for {
+// 		select {
+// 		case <-time.After(3 * time.Second):
+// 			fmt.Println("Timeout: request_cost")
+// 			return
+// 		default:
+// 			if len(costArray) == numNodes {
+// 				fmt.Println("Received cost from all")
+// 				return
+// 			}
+// 		}
+// 	}
+// }
 
 func calculate_own_cost(dest_floor int) (cost int) {
 
@@ -189,7 +190,9 @@ func delegate_hall(new_item elevio.ButtonEvent) {
 	// Request other elevator's cost
 	costArray = nil // Clear all elements
 	costArray = append(costArray, local_msg)
-	request_cost(dest_floor)
+	// request_cost(dest_floor)
+	tx <- Msg{id, 0, CmdReqCost, dest_floor}
+	<-time.After(3 * time.Second)
 	fmt.Printf("[%v] Cost array: %d\n", id, costArray)
 
 	// Delegate to lowest cost (Default: local)
@@ -200,12 +203,14 @@ func delegate_hall(new_item elevio.ButtonEvent) {
 		if message.Data < min_cost {
 			min_cost = message.Data
 			delegate_dest = message.Dest
+			local_delegation = false
 		} else {
 			local_delegation = true
 		}
 	}
 
 	if local_delegation {
+		fmt.Println("Taking order myself")
 		priorityQueue = append(priorityQueue, new_item)
 		fmt.Printf("[%v] Queue: %d\tLength: %d\n", id, priorityQueue, len(priorityQueue))
 	} else {
