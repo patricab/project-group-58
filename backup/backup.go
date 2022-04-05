@@ -1,18 +1,5 @@
 package backup
 
-/* Utility for saving and loading backups of orders to .txt files */
-
-/*
-EXAMPLE FILE STRUCTURE
-CAB ORDERS
-Floor	1		2		3		4
-		bool	bool	bool	bool
-HALL ORDERS
-		1		2		3		4
-up		bool	bool	bool
-down			bool	bool	bool
-*/
-
 import (
 	"encoding/json"
 	"io/ioutil"
@@ -31,6 +18,7 @@ type Order struct {
 }
 
 const BACKUP_FILENAME = "orders"
+const BACKUP_PATH = "orders/"
 
 func SaveOrder(queue []int, cab []bool, hall [][]bool) {
 
@@ -44,8 +32,8 @@ func SaveOrder(queue []int, cab []bool, hall [][]bool) {
 	filedata, errMarshal := json.MarshalIndent(&orders, "", " ")
 	check(errMarshal)
 
-	filename := BACKUP_FILENAME + ".json"
-	errWrite := ioutil.WriteFile(filename, filedata, 0644)
+	filepath := BACKUP_PATH + BACKUP_FILENAME + ".json"
+	errWrite := ioutil.WriteFile(filepath, filedata, 0644)
 	check(errWrite)
 }
 
@@ -53,8 +41,8 @@ func LoadOrder() ([]int, []bool, [][]bool) {
 
 	var orders Order
 
-	filename := BACKUP_FILENAME + ".json"
-	filedata, errRead := ioutil.ReadFile(filename)
+	filepath := BACKUP_PATH + BACKUP_FILENAME + ".json"
+	filedata, errRead := ioutil.ReadFile(filepath)
 	check(errRead)
 
 	errUnmarshal := json.Unmarshal(filedata, &orders)

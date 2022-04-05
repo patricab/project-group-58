@@ -25,7 +25,8 @@ type Msg struct {
 	Data    int // both cost and floor
 }
 
-func Handler(Id string, Tx chan Msg, Rx chan Msg, Peers chan peers.PeerUpdate) {
+// func Handler(Id string, Tx chan Msg, Rx chan Msg, Peers chan peers.PeerUpdate) {
+func Handler(Id string, Tx chan Msg, Rx chan Msg) {
 	// var dest string
 	// flag.StringVar(&id, "id", "", "id of this peer")
 	// // flag.StringVar(&dest, "dest", "", "destination id")
@@ -45,7 +46,7 @@ func Handler(Id string, Tx chan Msg, Rx chan Msg, Peers chan peers.PeerUpdate) {
 	// Channel for receiving updates on the id's of the peers that are
 	// alive on the network ==> Peers
 
-	// peerUpdateCh := make(chan peers.PeerUpdate)
+	peerUpdateCh := make(chan peers.PeerUpdate)
 
 	// Disable/enable the transmitter after it has been started.
 	peerTxEnable := make(chan bool)
@@ -55,7 +56,7 @@ func Handler(Id string, Tx chan Msg, Rx chan Msg, Peers chan peers.PeerUpdate) {
 
 	/* Peers Tx/Rx pair */
 	go peers.Transmitter(15648, Id, peerTxEnable)
-	go peers.Receiver(15648, Peers)
+	go peers.Receiver(15648, peerUpdateCh)
 
 	// We make channels for sending and receiving our custom data types
 	// _tx := make(chan Msg)
@@ -68,7 +69,7 @@ func Handler(Id string, Tx chan Msg, Rx chan Msg, Peers chan peers.PeerUpdate) {
 		select {
 		case m := <-_rx:
 			/* Check if recieved dest matches our ID, or special case ID (*0) */
-			if (m.Dest == _id) || (m.Dest == 0) {
+			if (m.Dest == _id) || (m.Dest == 0 && m.Id != _id) {
 				Rx <- m // Pass message on to user
 			}
 		}

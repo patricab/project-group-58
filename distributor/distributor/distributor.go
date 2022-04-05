@@ -2,7 +2,6 @@ package distributor
 
 import (
 	"Driver-go/elevio"
-	"Network-go/network/peers"
 	"fmt"
 	"fsm/fsm"
 	"network/network"
@@ -14,6 +13,7 @@ import (
 /* Global variables */
 var id int
 var floor int
+var numNodes int
 
 // var costArr []int
 // var priorityQueue []int //[]elevio.ButtonEvent
@@ -26,23 +26,22 @@ var costArray []Msg
 var tx = make(chan network.Msg)
 var rx = make(chan network.Msg)
 
-var _peers_chan = make(chan peers.PeerUpdate)
-var _peers peers.PeerUpdate
 var _btn = make(chan elevio.ButtonEvent)
 var btn = make(chan elevio.ButtonEvent)
 
 // var finished = make(chan bool)
-var _floor = make(chan int)
+var floor_chan = make(chan int)
 var current_floor = make(chan int)
-var current_state fsm.State
 
-const N_ELEVATORS = 2
+// var current_state fsm.State
+// var current_state_chan chan fsm.State
 
-func Distributor(_id int, port int) {
+func Distributor(_id int, port int, _numNodes int) {
 	/* Variables */
 	// var wg sync.WaitGroup
 	finished := make(chan bool)
 	id = _id
+	numNodes = _numNodes
 	fmt.Printf("Current ID: %d\n", id)
 
 	/* Initalize required modules */
@@ -50,13 +49,14 @@ func Distributor(_id int, port int) {
 	elevio.Init(host, 4)
 	fmt.Printf("[%v] Initializing.\n", id)
 
-	go network.Handler(strconv.Itoa(_id), tx, rx, _peers_chan)
+	go network.Handler(strconv.Itoa(_id), tx, rx)
 	go elevio.PollButtons(btn)
-	go elevio.PollFloorSensor(_floor)
+	go elevio.PollFloorSensor(floor_chan)
 	go elevio.PollFloorSensor(current_floor)
 
 	// wg.Add(1) // Add Handler to waitgroup
-	go fsm.Handler(_btn, _floor, current_state, finished)
+	// go fsm.Handler(_btn, floor_chan, current_state_chan, finished)
+	go fsm.Handler(_btn, floor_chan, finished)
 	// wg.Wait() // Run Handler indefinetly
 
 	go func() {
@@ -72,11 +72,14 @@ func Distributor(_id int, port int) {
 	}()
 
 	go func() {
-		floor = <-current_floor
-	}()
-
-	go func() {
-		_peers = <-_peers_chan
+		for {
+			select {
+			case floor = <-current_floor:
+				fmt.Printf("[%v] Floor: %d\n", id, floor)
+				// case current_state = <-current_state_chan:
+				// 	fmt.Printf("[%v] Current state: %d\n", id, current_state)
+			}
+		}
 	}()
 
 	for {
@@ -95,9 +98,9 @@ func Distributor(_id int, port int) {
 			} else if m.Command == CmdReqCost {
 				fmt.Printf("[%v] Received cmdReqCost\n", id)
 				cost := calculate_own_cost(m.Data)
-				m.Command = CmdCost // CmdCost
-				m.Data = cost
-				tx <- m
+				fmt.Printf("[%v] Calculated cost", id)
+				msg := Msg{id, m.Id, CmdCost, cost}
+				tx <- msg
 			} else if m.Command == CmdCost {
 				fmt.Printf("[%v] Received cost from node\n", id)
 				costArray = append(costArray, m)
@@ -111,10 +114,8 @@ func Distributor(_id int, port int) {
 
 func request_cost(target int) {
 	// Check num of connected nodes
-	numNodes := len(_peers.Peers) - 1
-	fmt.Printf("[%v] Number of nodes: %d\n", id, numNodes)
+	// numNodes := len(_peers.Peers) - 1
 	//timer := time.NewTimer(time.Duration(costTimeout) * time.Millisecond)
-	timeout := time.After(500 * time.Millisecond)
 
 	// Send cost req
 	fmt.Printf("[%v] Sending cost request\n", id)
@@ -122,38 +123,40 @@ func request_cost(target int) {
 
 	for {
 		select {
-		case <-timeout:
-			fmt.Println("ReqCost timeout")
+		case <-time.After(3 * time.Second):
+			fmt.Println("Timeout: request_cost")
 			return
 		default:
 			if len(costArray) == numNodes {
-				fmt.Println("Received all costs")
+				fmt.Println("Received cost from all")
 				return
 			}
 		}
 	}
 }
 
-// func watchdog() {
-// 	// Patric
-// }
-
 func calculate_own_cost(dest_floor int) (cost int) {
 
 	FLOOR_TRAVEL_TIME := 2
-	MOVING_PENALTY := 1
-	DOOR_OPEN_TIME := 3
+	// MOVING_PENALTY := 1
+	// DOOR_OPEN_TIME := 3
 
-	fmt.Printf("[%v] Calc_cost: current floor %v and desired floor %v\n", id, floor, dest_floor)
+	fmt.Printf("[%v] Calculating cost with current floor %v and desired floor %v\n", id, floor, dest_floor)
 
-	switch current_state {
-	case fsm.DOORS_OPEN:
-		cost = int(Abs(floor-dest_floor)*FLOOR_TRAVEL_TIME + DOOR_OPEN_TIME/2)
-	case fsm.IDLE:
-		cost = Abs(floor-dest_floor) * FLOOR_TRAVEL_TIME
-	case fsm.MOVING:
-		cost = Abs(floor-dest_floor)*FLOOR_TRAVEL_TIME*FLOOR_TRAVEL_TIME + MOVING_PENALTY
+	if len(priorityQueue) > 0 {
+		cost = (Abs(floor-priorityQueue[0].Floor) + Abs(priorityQueue[0].Floor-dest_floor)) * FLOOR_TRAVEL_TIME
+	} else {
+		cost = (Abs(floor - dest_floor)) * FLOOR_TRAVEL_TIME
 	}
+	// fmt.Printf("[%v] Current state: %d\n", id, current_state)
+	// switch current_state {
+	// case fsm.DOORS_OPEN:
+	// 	cost = int(Abs(floor-dest_floor)*FLOOR_TRAVEL_TIME + DOOR_OPEN_TIME/2)
+	// case fsm.IDLE:
+	// 	cost = Abs(floor-dest_floor) * FLOOR_TRAVEL_TIME
+	// case fsm.MOVING:
+	// 	cost = Abs(floor-dest_floor)*FLOOR_TRAVEL_TIME*FLOOR_TRAVEL_TIME + MOVING_PENALTY
+	// }
 
 	return cost
 }
@@ -187,6 +190,7 @@ func delegate_hall(new_item elevio.ButtonEvent) {
 	costArray = nil // Clear all elements
 	costArray = append(costArray, local_msg)
 	request_cost(dest_floor)
+	fmt.Printf("[%v] Cost array: %d\n", id, costArray)
 
 	// Delegate to lowest cost (Default: local)
 	min_cost := local_msg.Data

@@ -18,7 +18,8 @@ const (
 	DOORS_OPEN State = 3
 )
 
-func Handler(button chan elevio.ButtonEvent, floor chan int, current_state State, finished chan bool) {
+// func Handler(button chan elevio.ButtonEvent, floor chan int, current_state chan State, finished chan bool) {
+func Handler(button chan elevio.ButtonEvent, floor chan int, finished chan bool) {
 	/* Local variables */
 	var _floor int
 	var target elevio.ButtonEvent
@@ -30,7 +31,7 @@ func Handler(button chan elevio.ButtonEvent, floor chan int, current_state State
 
 	var dir elevio.MotorDirection = elevio.MD_Stop
 	elevio.SetMotorDirection(dir)
-	current_state = IDLE
+	// current_state <- IDLE
 
 	go elevio.PollObstructionSwitch(obstr)
 	go elevio.PollStopButton(stop)
@@ -45,40 +46,40 @@ func Handler(button chan elevio.ButtonEvent, floor chan int, current_state State
 				dir = elevio.MD_Up
 			}
 			elevio.SetMotorDirection(dir)
-			current_state = MOVING
+			// current_state <- MOVING
 			elevio.SetButtonLamp(target.Button, target.Floor, true)
 
 		case _floor = <-floor:
-			fmt.Printf("%+v\n", _floor)
+			// fmt.Printf("%+v\n", _floor)
 			if _floor > target.Floor {
 				dir = elevio.MD_Down
 				elevio.SetMotorDirection(dir)
-				current_state = MOVING
+				// current_state <- MOVING
 				elevio.SetFloorIndicator(_floor)
 			} else if _floor < target.Floor {
 				dir = elevio.MD_Up
 				elevio.SetMotorDirection(dir)
-				current_state = MOVING
+				// current_state <- MOVING
 				elevio.SetFloorIndicator(_floor)
 			} else if _floor == target.Floor {
 				dir = elevio.MD_Stop
 				elevio.SetButtonLamp(target.Button, target.Floor, false)
 				elevio.SetMotorDirection(dir)
-				current_state = IDLE
+				// current_state <- IDLE
 				elevio.SetFloorIndicator(_floor)
 
-				current_state = DOORS_OPEN
+				// current_state <- DOORS_OPEN
 				open_door()
-				current_state = IDLE
+				// current_state <- IDLE
 				finished <- true
 			}
 
 		case a := <-obstr:
 			fmt.Printf("%+v\n", a)
 			if _doors_open {
-				current_state = DOORS_OPEN
+				// current_state <- DOORS_OPEN
 				open_door()
-				current_state = IDLE
+				// current_state <- IDLE
 			}
 
 		case a := <-stop:

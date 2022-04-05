@@ -1,5 +1,6 @@
-# ~Elevator~
-This project uses peer-to-peer to 
+# A P2P Elevator System
+Note: Each module has its own README for details.
+This project uses peer-to-peer to solve the assignment of orders for ``n`` numbers of elevators on a system of ``m`` floors. The system revolves around the distributor which connects all the main modules. When cab and hall buttons are pressed on the control box its respective elevator is responsible for delegating that order. Delegation is done by requesting other elevators costs and delegating the order to the elevator with the lowest cost.
 
 Elevator Project
 ================
