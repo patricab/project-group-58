@@ -98,7 +98,7 @@ func Distributor(_id int, port int, _numNodes int) {
 			} else if m.Command == CmdReqCost {
 				fmt.Printf("[%v] Received cmdReqCost\n", id)
 				cost := calculate_own_cost(m.Data)
-				fmt.Printf("[%v] Calculated cost: %d", id, cost)
+				fmt.Printf("[%v] Calculated cost: %d\n", id, cost)
 				msg := Msg{id, m.Id, CmdCost, cost}
 				tx <- msg
 			} else if m.Command == CmdCost {
