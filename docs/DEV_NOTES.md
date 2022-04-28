@@ -16,3 +16,22 @@ You can also include your module by adding this line to your Go file:  `import "
 In this case, you have to run the command  `go mod edit -replace <module name>=<path to your module>` (don't include the triangle brackets "<>")  
 You can also add this line to your module file (_name.mod_):  `replace <name> => <path to your module>` (again, don't include the triangle brackets "<>"!!!)  
 
+<br/>
+
+## Running program
+(Optional)
+Run SimElevatorServer
+
+```shell
+./SimElevatorServer --port <port>
+```
+_NOTE: defaults to 15657 (use range 15xxx)_
+
+<br/>
+
+Run distributor (one instance per. module)
+```shell
+cd distributor/
+go run main.go -id=<id> -port=<elev-server-port> -num=<total-num-of-nodes>
+```
+_(Ex: go run main.go -id=1 -port=123 -num=2)_
