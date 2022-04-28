@@ -29,7 +29,7 @@ _NOTE: defaults to 15657 (use range 15xxx)_
 
 <br/>
 
-Run distributor (one instance per. module)
+Run distributor (one instance per. elevator node)
 ```shell
 cd distributor/
 go run main.go -id=<id> -port=<elev-server-port> -num=<total-num-of-nodes>
